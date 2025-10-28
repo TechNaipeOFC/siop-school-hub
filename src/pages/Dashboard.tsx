@@ -3,8 +3,10 @@ import { StatsCard } from '@/components/StatsCard';
 import { OccurrenceBadge } from '@/components/OccurrenceBadge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { FileText, TrendingUp, AlertTriangle, Trophy, Plus, GraduationCap, LogOut } from 'lucide-react';
+import { FileText, TrendingUp, AlertTriangle, Trophy, Plus, GraduationCap, LogOut, QrCode } from 'lucide-react';
 import { mockOccurrences } from '@/lib/mockData';
+import { QRCodeSVG } from 'qrcode.react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -47,10 +49,43 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">Visão geral das ocorrências</p>
           </div>
-          <Button onClick={() => navigate('/occurrences/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Ocorrência
-          </Button>
+          <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <QrCode className="mr-2 h-4 w-4" />
+                  QR Code
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>QR Code - Nova Ocorrência</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/occurrences/new`} 
+                    size={256} 
+                    level="H" 
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Escaneie este código para preencher uma nova ocorrência rapidamente
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate('/qr-scanner')}
+                    className="w-full"
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Escanear QR Code
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button onClick={() => navigate('/occurrences/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Ocorrência
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -97,7 +132,7 @@ const Dashboard = () => {
                 <div
                   key={occurrence.id}
                   className="flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/occurrences/${occurrence.id}`)}
+                  onClick={() => navigate(`/occurrences/detail/${occurrence.id}`)}
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">

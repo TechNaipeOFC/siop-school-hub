@@ -8,11 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GraduationCap, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { mockStudents } from '@/lib/mockData';
+import { StudentSearch } from '@/components/StudentSearch';
+import { Student } from '@/types/occurrence';
 
 const NewOccurrence = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,22 +52,12 @@ const NewOccurrence = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              <StudentSearch 
+                onSelectStudent={setSelectedStudent}
+                selectedStudentId={selectedStudent?.id}
+              />
+
               <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="student">Aluno *</Label>
-                  <Select required>
-                    <SelectTrigger id="student">
-                      <SelectValue placeholder="Selecione o aluno" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockStudents.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.name} - {student.class}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="date">Data *</Label>
@@ -128,13 +120,18 @@ const NewOccurrence = () => {
               </div>
 
               <div className="flex gap-4">
-                <Button type="submit" disabled={isSubmitting} className="flex-1">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || !selectedStudent} 
+                  className="flex-1"
+                >
                   {isSubmitting ? 'Registrando...' : 'Registrar Ocorrência'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate('/occurrences')}
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>

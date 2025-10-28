@@ -108,7 +108,7 @@ const Occurrences = () => {
             <Card
               key={occurrence.id}
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate(`/occurrences/${occurrence.id}`)}
+              onClick={() => navigate(`/occurrences/detail/${occurrence.id}`)}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">

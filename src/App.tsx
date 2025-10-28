@@ -8,6 +8,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Occurrences from "./pages/Occurrences";
 import NewOccurrence from "./pages/NewOccurrence";
+import OccurrenceDetail from "./pages/OccurrenceDetail";
+import QRScanner from "./pages/QRScanner";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/occurrences" element={<Occurrences />} />
           <Route path="/occurrences/new" element={<NewOccurrence />} />
+          <Route path="/occurrences/detail/:id" element={<OccurrenceDetail />} />
+          <Route path="/qr-scanner" element={<QRScanner />} />
           <Route path="/reports" element={<Reports />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
