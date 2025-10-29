@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, FileText, Bell, BarChart3, Shield, Users } from 'lucide-react';
+import { GraduationCap, FileText, Bell, BarChart3, Shield, Users, Clock } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -9,27 +9,38 @@ const Index = () => {
     {
       icon: FileText,
       title: 'Registro de Ocorrências',
-      description: 'Registre e acompanhe ocorrências pedagógicas e disciplinares de forma rápida e organizada.'
+      description: 'Registre e acompanhe ocorrências pedagógicas e disciplinares de forma rápida e organizada.',
+      action: () => navigate('/auth')
     },
     {
       icon: Bell,
       title: 'Notificações Automáticas',
-      description: 'Responsáveis e gestores recebem notificações instantâneas sobre novas ocorrências.'
+      description: 'Responsáveis e gestores recebem notificações instantâneas sobre novas ocorrências.',
+      action: () => navigate('/about')
     },
     {
       icon: BarChart3,
       title: 'Relatórios Gerenciais',
-      description: 'Gere relatórios detalhados com filtros por período, tipo e aluno.'
+      description: 'Gere relatórios detalhados com filtros por período, tipo e aluno.',
+      action: () => navigate('/auth')
     },
     {
       icon: Users,
       title: 'Gestão de Usuários',
-      description: 'Controle de acesso para professores, gestores e responsáveis.'
+      description: 'Controle de acesso para professores, gestores e responsáveis.',
+      action: () => navigate('/about')
     },
     {
       icon: Shield,
       title: 'Segurança e Privacidade',
-      description: 'Sistema seguro com autenticação e proteção de dados sensíveis.'
+      description: 'Sistema seguro com autenticação e proteção de dados sensíveis.',
+      action: () => navigate('/about')
+    },
+    {
+      icon: Clock,
+      title: 'Histórico Completo',
+      description: 'Acesse o histórico completo de ocorrências a qualquer momento.',
+      action: () => navigate('/auth')
     }
   ];
 
@@ -62,7 +73,7 @@ const Index = () => {
             <Button size="lg" onClick={() => navigate('/auth')}>
               Começar Agora
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" onClick={() => navigate('/about')}>
               Saiba Mais
             </Button>
           </div>
@@ -80,7 +91,8 @@ const Index = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="p-6 rounded-lg border bg-card hover:shadow-lg transition-shadow"
+              className="p-6 rounded-lg border bg-card hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={feature.action}
             >
               <feature.icon className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>

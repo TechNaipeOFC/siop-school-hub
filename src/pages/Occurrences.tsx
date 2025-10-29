@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OccurrenceBadge } from '@/components/OccurrenceBadge';
@@ -10,17 +11,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const Occurrences = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Apply filters from URL params
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (filter === 'pending') {
+      setStatusFilter('pending');
+    } else if (filter === 'critical') {
+      setSeverityFilter('critica');
+    } else if (filter === 'positive') {
+      setTypeFilter('elogio');
+    }
+  }, [searchParams]);
 
   const filteredOccurrences = mockOccurrences.filter(occurrence => {
     const matchesSearch = occurrence.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          occurrence.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || occurrence.type === typeFilter;
     const matchesSeverity = severityFilter === 'all' || occurrence.severity === severityFilter;
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'pending' && !occurrence.resolved) ||
+                         (statusFilter === 'resolved' && occurrence.resolved);
     
-    return matchesSearch && matchesType && matchesSeverity;
+    return matchesSearch && matchesType && matchesSeverity && matchesStatus;
   });
 
   return (
@@ -96,6 +114,17 @@ const Occurrences = () => {
                   <SelectItem value="media">Média</SelectItem>
                   <SelectItem value="alta">Alta</SelectItem>
                   <SelectItem value="critica">Crítica</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="resolved">Resolvidas</SelectItem>
                 </SelectContent>
               </Select>
             </div>

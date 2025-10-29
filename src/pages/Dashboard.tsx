@@ -90,34 +90,42 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <StatsCard
-            title="Total de Ocorrências"
-            value={stats.total}
-            icon={FileText}
-            description="Registros no sistema"
-            variant="primary"
-          />
-          <StatsCard
-            title="Pendentes"
-            value={stats.pending}
-            icon={TrendingUp}
-            description="Aguardando resolução"
-            variant="warning"
-          />
-          <StatsCard
-            title="Casos Críticos"
-            value={stats.critical}
-            icon={AlertTriangle}
-            description="Requerem atenção urgente"
-            variant="destructive"
-          />
-          <StatsCard
-            title="Elogios"
-            value={stats.positive}
-            icon={Trophy}
-            description="Reconhecimentos positivos"
-            variant="success"
-          />
+          <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=all')}>
+            <StatsCard
+              title="Total de Ocorrências"
+              value={stats.total}
+              icon={FileText}
+              description="Registros no sistema"
+              variant="primary"
+            />
+          </div>
+          <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=pending')}>
+            <StatsCard
+              title="Pendentes"
+              value={stats.pending}
+              icon={TrendingUp}
+              description="Aguardando resolução"
+              variant="warning"
+            />
+          </div>
+          <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=critical')}>
+            <StatsCard
+              title="Casos Críticos"
+              value={stats.critical}
+              icon={AlertTriangle}
+              description="Requerem atenção urgente"
+              variant="destructive"
+            />
+          </div>
+          <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=positive')}>
+            <StatsCard
+              title="Elogios"
+              value={stats.positive}
+              icon={Trophy}
+              description="Reconhecimentos positivos"
+              variant="success"
+            />
+          </div>
         </div>
 
         {/* Recent Occurrences */}
