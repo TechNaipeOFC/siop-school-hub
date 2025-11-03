@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, LogOut, Download, Calendar, BarChart3 } from 'lucide-react';
 import { mockOccurrences } from '@/lib/mockData';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -25,6 +26,30 @@ const Reports = () => {
   };
 
   const handleExport = () => {
+    // Prepare data for Excel
+    const exportData = mockOccurrences.map(occ => ({
+      'Aluno': occ.studentName,
+      'Tipo': occ.type,
+      'Gravidade': occ.severity,
+      'Descrição': occ.description,
+      'Ação Corretiva': occ.correctiveAction || 'N/A',
+      'Professor': occ.teacherName,
+      'Data': new Date(occ.date).toLocaleDateString('pt-BR'),
+      'Status': occ.resolved ? 'Resolvida' : 'Pendente',
+      'Notificado': occ.notified ? 'Sim' : 'Não',
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ocorrências');
+    
+    // Save file
+    const fileName = `relatorio_ocorrencias_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
     toast.success('Relatório exportado com sucesso!');
   };
 
@@ -75,19 +100,31 @@ const Reports = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+              <div 
+                className="p-4 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                onClick={() => navigate('/occurrences')}
+              >
                 <p className="text-sm font-medium text-muted-foreground">Total de Ocorrências</p>
                 <p className="text-3xl font-bold text-primary">{stats.totalOccurrences}</p>
               </div>
-              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+              <div 
+                className="p-4 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                onClick={() => navigate('/occurrences?filter=positive')}
+              >
                 <p className="text-sm font-medium text-muted-foreground">Elogios</p>
                 <p className="text-3xl font-bold text-success">{stats.byType.elogio}</p>
               </div>
-              <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+              <div 
+                className="p-4 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                onClick={() => navigate('/occurrences?filter=pedagogico')}
+              >
                 <p className="text-sm font-medium text-muted-foreground">Pedagógico</p>
                 <p className="text-3xl font-bold text-warning">{stats.byType.pedagogico}</p>
               </div>
-              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+              <div 
+                className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                onClick={() => navigate('/occurrences?filter=indisciplina')}
+              >
                 <p className="text-sm font-medium text-muted-foreground">Indisciplina</p>
                 <p className="text-3xl font-bold text-destructive">{stats.byType.indisciplina}</p>
               </div>

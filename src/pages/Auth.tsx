@@ -1,213 +1,325 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { GraduationCap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Student form state
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [studentRegistration, setStudentRegistration] = useState('');
+  const [studentClass, setStudentClass] = useState('');
+  const [responsibleName, setResponsibleName] = useState('');
+  const [responsiblePhone, setResponsiblePhone] = useState('');
+
+  // Staff form state
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [staffName, setStaffName] = useState('');
+
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  const handleStudentSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: studentEmail,
+        password: studentPassword,
+        options: {
+          data: {
+            full_name: studentName,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Create student record
+        const { error: studentError } = await supabase
+          .from('students')
+          .insert({
+            user_id: data.user.id,
+            registration: studentRegistration,
+            class: studentClass,
+            responsible_name: responsibleName,
+            responsible_phone: responsiblePhone,
+          });
+
+        if (studentError) throw studentError;
+
+        // Assign student role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: 'student',
+          });
+
+        if (roleError) throw roleError;
+
+        toast.success('Cadastro de aluno realizado com sucesso!');
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao cadastrar aluno');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStaffSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: staffEmail,
+        password: staffPassword,
+        options: {
+          data: {
+            full_name: staffName,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Assign staff role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: 'staff',
+          });
+
+        if (roleError) throw roleError;
+
+        toast.success('Cadastro de funcionário realizado com sucesso!');
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao cadastrar funcionário');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulação de login
-    setTimeout(() => {
-      toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
-      setIsLoading(false);
-    }, 1000);
-  };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulação de cadastro
-    setTimeout(() => {
-      toast.success('Conta criada com sucesso!');
-      navigate('/dashboard');
-      setIsLoading(false);
-    }, 1000);
-  };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
 
-  const handleStudentLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulação de login do aluno
-    setTimeout(() => {
-      toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      if (error) throw error;
+
+      if (data.user) {
+        toast.success('Login realizado com sucesso!');
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao fazer login');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <GraduationCap className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold">SIOP</span>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <GraduationCap className="h-12 w-12 text-primary" />
           </div>
-          <p className="text-muted-foreground">Sistema Integrado de Ocorrências Pedagógicas</p>
-        </div>
+          <CardTitle className="text-2xl">SIOP</CardTitle>
+          <CardDescription>Sistema Integrado de Ocorrências Pedagógicas</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="student">Aluno</TabsTrigger>
+              <TabsTrigger value="staff">Funcionário</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Bem-vindo</CardTitle>
-            <CardDescription>Entre com sua conta ou crie uma nova</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="student">Aluno</TabsTrigger>
-                <TabsTrigger value="login">Funcionário</TabsTrigger>
-                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-              </TabsList>
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Senha</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Entrando...' : 'Entrar'}
+                </Button>
+              </form>
+            </TabsContent>
 
-              <TabsContent value="student">
-                <form onSubmit={handleStudentLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ra">RA (Registro do Aluno)</Label>
-                    <Input
-                      id="ra"
-                      type="text"
-                      placeholder="000112208938"
-                      required
-                      maxLength={12}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="digit">Dígito</Label>
-                      <Input
-                        id="digit"
-                        type="text"
-                        placeholder="8"
-                        required
-                        maxLength={1}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="uf">UF</Label>
-                      <Select required>
-                        <SelectTrigger id="uf">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SP">SP</SelectItem>
-                          <SelectItem value="RJ">RJ</SelectItem>
-                          <SelectItem value="MG">MG</SelectItem>
-                          <SelectItem value="ES">ES</SelectItem>
-                          <SelectItem value="PR">PR</SelectItem>
-                          <SelectItem value="SC">SC</SelectItem>
-                          <SelectItem value="RS">RS</SelectItem>
-                          <SelectItem value="BA">BA</SelectItem>
-                          <SelectItem value="PE">PE</SelectItem>
-                          <SelectItem value="CE">CE</SelectItem>
-                          <SelectItem value="PA">PA</SelectItem>
-                          <SelectItem value="AM">AM</SelectItem>
-                          <SelectItem value="GO">GO</SelectItem>
-                          <SelectItem value="MT">MT</SelectItem>
-                          <SelectItem value="MS">MS</SelectItem>
-                          <SelectItem value="DF">DF</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="student-password">Senha</Label>
-                    <Input
-                      id="student-password"
-                      type="password"
-                      placeholder="Digite sua senha"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Entrando...' : 'Entrar como Aluno'}
-                  </Button>
-                </form>
-              </TabsContent>
+            <TabsContent value="student">
+              <form onSubmit={handleStudentSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="student-name">Nome Completo</Label>
+                  <Input
+                    id="student-name"
+                    placeholder="João Silva"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="student-registration">Matrícula</Label>
+                  <Input
+                    id="student-registration"
+                    placeholder="123456"
+                    value={studentRegistration}
+                    onChange={(e) => setStudentRegistration(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="student-class">Série</Label>
+                  <Input
+                    id="student-class"
+                    placeholder="3º Ano A"
+                    value={studentClass}
+                    onChange={(e) => setStudentClass(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="responsible-name">Nome do Responsável</Label>
+                  <Input
+                    id="responsible-name"
+                    placeholder="Maria Silva"
+                    value={responsibleName}
+                    onChange={(e) => setResponsibleName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="responsible-phone">Telefone do Responsável</Label>
+                  <Input
+                    id="responsible-phone"
+                    placeholder="(11) 98765-4321"
+                    value={responsiblePhone}
+                    onChange={(e) => setResponsiblePhone(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="student-email">Email</Label>
+                  <Input
+                    id="student-email"
+                    type="email"
+                    placeholder="aluno@email.com"
+                    value={studentEmail}
+                    onChange={(e) => setStudentEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="student-password">Senha</Label>
+                  <Input
+                    id="student-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={studentPassword}
+                    onChange={(e) => setStudentPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Cadastrando...' : 'Cadastrar Aluno'}
+                </Button>
+              </form>
+            </TabsContent>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Entrando...' : 'Entrar'}
-                  </Button>
-                </form>
-              </TabsContent>
+            <TabsContent value="staff">
+              <form onSubmit={handleStaffSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="staff-name">Nome Completo</Label>
+                  <Input
+                    id="staff-name"
+                    placeholder="Prof. Carlos Santos"
+                    value={staffName}
+                    onChange={(e) => setStaffName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="staff-email">Email</Label>
+                  <Input
+                    id="staff-email"
+                    type="email"
+                    placeholder="professor@email.com"
+                    value={staffEmail}
+                    onChange={(e) => setStaffEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="staff-password">Senha</Label>
+                  <Input
+                    id="staff-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={staffPassword}
+                    onChange={(e) => setStaffPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Cadastrando...' : 'Cadastrar Funcionário'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Seu nome"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Criando conta...' : 'Criar Conta'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <div className="text-center mt-4">
-          <Button variant="link" onClick={() => navigate('/')}>
-            Voltar para a página inicial
-          </Button>
-        </div>
-      </div>
+          <div className="mt-6 text-center">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              Voltar para a página inicial
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

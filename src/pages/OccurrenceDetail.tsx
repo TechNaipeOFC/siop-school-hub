@@ -6,6 +6,7 @@ import { mockOccurrences } from '@/lib/mockData';
 import { ArrowLeft, Printer, QrCode, GraduationCap, LogOut } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 const OccurrenceDetail = () => {
   const { id } = useParams();
@@ -22,6 +23,12 @@ const OccurrenceDetail = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleResolve = () => {
+    // TODO: Update occurrence status in database
+    toast.success('Ocorrência finalizada com sucesso!');
+    navigate('/occurrences');
   };
 
   // URL para preenchimento rápido via QR Code
@@ -58,6 +65,11 @@ const OccurrenceDetail = () => {
             Voltar
           </Button>
           <div className="flex gap-2">
+            {!occurrence.resolved && (
+              <Button onClick={handleResolve}>
+                Finalizar Ocorrência
+              </Button>
+            )}
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -77,7 +89,7 @@ const OccurrenceDetail = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button onClick={handlePrint}>
+            <Button onClick={handlePrint} variant="outline">
               <Printer className="mr-2 h-4 w-4" />
               Imprimir Ficha
             </Button>

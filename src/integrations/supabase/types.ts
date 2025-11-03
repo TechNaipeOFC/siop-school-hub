@@ -14,16 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      occurrences: {
+        Row: {
+          corrective_action: string | null
+          created_at: string | null
+          description: string
+          id: string
+          notified: boolean | null
+          resolved: boolean | null
+          severity: string
+          student_id: string
+          teacher_id: string | null
+          type: string
+        }
+        Insert: {
+          corrective_action?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          notified?: boolean | null
+          resolved?: boolean | null
+          severity: string
+          student_id: string
+          teacher_id?: string | null
+          type: string
+        }
+        Update: {
+          corrective_action?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          notified?: boolean | null
+          resolved?: boolean | null
+          severity?: string
+          student_id?: string
+          teacher_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occurrences_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          full_name: string
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          class: string
+          created_at: string | null
+          id: string
+          registration: string
+          responsible_name: string
+          responsible_phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          class: string
+          created_at?: string | null
+          id?: string
+          registration: string
+          responsible_name: string
+          responsible_phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          class?: string
+          created_at?: string | null
+          id?: string
+          registration?: string
+          responsible_name?: string
+          responsible_phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +268,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "staff"],
+    },
   },
 } as const

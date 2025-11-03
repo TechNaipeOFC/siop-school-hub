@@ -26,6 +26,10 @@ const Occurrences = () => {
       setSeverityFilter('critica');
     } else if (filter === 'positive') {
       setTypeFilter('elogio');
+    } else if (filter === 'pedagogico') {
+      setTypeFilter('pedagogico');
+    } else if (filter === 'indisciplina') {
+      setTypeFilter('indisciplina');
     }
   }, [searchParams]);
 
