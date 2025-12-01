@@ -14,8 +14,7 @@ const Reports = () => {
     byType: {
       comportamento: mockOccurrences.filter(o => o.type === 'comportamento').length,
       pedagogico: mockOccurrences.filter(o => o.type === 'pedagogico').length,
-      indisciplina: mockOccurrences.filter(o => o.type === 'indisciplina').length,
-      elogio: mockOccurrences.filter(o => o.type === 'elogio').length
+      indisciplina: mockOccurrences.filter(o => o.type === 'indisciplina').length
     },
     bySeverity: {
       baixa: mockOccurrences.filter(o => o.severity === 'baixa').length,
@@ -99,20 +98,13 @@ const Reports = () => {
             <CardDescription>Resumo das ocorrências registradas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
               <div 
                 className="p-4 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
                 onClick={() => navigate('/occurrences')}
               >
                 <p className="text-sm font-medium text-muted-foreground">Total de Ocorrências</p>
                 <p className="text-3xl font-bold text-primary">{stats.totalOccurrences}</p>
-              </div>
-              <div 
-                className="p-4 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
-                onClick={() => navigate('/occurrences?filter=positive')}
-              >
-                <p className="text-sm font-medium text-muted-foreground">Elogios</p>
-                <p className="text-3xl font-bold text-success">{stats.byType.elogio}</p>
               </div>
               <div 
                 className="p-4 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
@@ -146,8 +138,7 @@ const Reports = () => {
                   const labels = {
                     comportamento: 'Comportamento',
                     pedagogico: 'Pedagógico',
-                    indisciplina: 'Indisciplina',
-                    elogio: 'Elogio'
+                    indisciplina: 'Indisciplina'
                   };
                   
                   return (

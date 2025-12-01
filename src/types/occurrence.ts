@@ -1,4 +1,4 @@
-export type OccurrenceType = 'comportamento' | 'pedagogico' | 'indisciplina' | 'elogio';
+export type OccurrenceType = 'comportamento' | 'pedagogico' | 'indisciplina';
 
 export type OccurrenceSeverity = 'baixa' | 'media' | 'alta' | 'critica';
 

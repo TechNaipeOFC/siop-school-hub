@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      classes: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       occurrences: {
         Row: {
           corrective_action: string | null
@@ -82,8 +100,10 @@ export type Database = {
       students: {
         Row: {
           class: string
+          class_id: string | null
           created_at: string | null
           id: string
+          name: string | null
           registration: string
           responsible_name: string
           responsible_phone: string | null
@@ -91,8 +111,10 @@ export type Database = {
         }
         Insert: {
           class: string
+          class_id?: string | null
           created_at?: string | null
           id?: string
+          name?: string | null
           registration: string
           responsible_name: string
           responsible_phone?: string | null
@@ -100,14 +122,24 @@ export type Database = {
         }
         Update: {
           class?: string
+          class_id?: string | null
           created_at?: string | null
           id?: string
+          name?: string | null
           registration?: string
           responsible_name?: string
           responsible_phone?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

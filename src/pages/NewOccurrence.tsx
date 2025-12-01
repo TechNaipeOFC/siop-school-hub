@@ -9,22 +9,64 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GraduationCap, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { StudentSearch } from '@/components/StudentSearch';
-import { Student } from '@/types/occurrence';
+import { Student, OccurrenceType, OccurrenceSeverity } from '@/types/occurrence';
+import { supabase } from '@/integrations/supabase/client';
+import { useClasses } from '@/hooks/useClasses';
+import { ClassManager } from '@/components/ClassManager';
 
 const NewOccurrence = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [type, setType] = useState<OccurrenceType | ''>('');
+  const [severity, setSeverity] = useState<OccurrenceSeverity | ''>('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const { data: classes = [] } = useClasses();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const formData = new FormData(e.currentTarget);
+      
+      if (!selectedStudent) {
+        toast.error('Selecione um aluno');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('occurrences')
+        .insert({
+          student_id: selectedStudent.id,
+          teacher_id: user.id,
+          type: formData.get('type') as string,
+          severity: formData.get('severity') as string,
+          description: formData.get('description') as string,
+          corrective_action: formData.get('action') as string || null,
+          notified: false,
+          resolved: false
+        });
+
+      if (error) throw error;
+
       toast.success('Ocorrência registrada com sucesso!');
       navigate('/occurrences');
+    } catch (error: any) {
+      console.error('Erro ao registrar ocorrência:', error);
+      toast.error(error.message || 'Erro ao registrar ocorrência');
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -58,20 +100,9 @@ const NewOccurrence = () => {
               />
 
               <div className="grid gap-6 md:grid-cols-2">
-
-                <div className="space-y-2">
-                  <Label htmlFor="date">Data *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    defaultValue={new Date().toISOString().split('T')[0]}
-                    required
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="type">Tipo de Ocorrência *</Label>
-                  <Select required>
+                  <Select name="type" value={type} onValueChange={(value) => setType(value as OccurrenceType)} required>
                     <SelectTrigger id="type">
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
@@ -79,14 +110,13 @@ const NewOccurrence = () => {
                       <SelectItem value="comportamento">Comportamento</SelectItem>
                       <SelectItem value="pedagogico">Pedagógico</SelectItem>
                       <SelectItem value="indisciplina">Indisciplina</SelectItem>
-                      <SelectItem value="elogio">Elogio</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="severity">Gravidade *</Label>
-                  <Select required>
+                  <Select name="severity" value={severity} onValueChange={(value) => setSeverity(value as OccurrenceSeverity)} required>
                     <SelectTrigger id="severity">
                       <SelectValue placeholder="Selecione a gravidade" />
                     </SelectTrigger>
@@ -98,12 +128,32 @@ const NewOccurrence = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="class">Turma *</Label>
+                    <ClassManager />
+                  </div>
+                  <Select value={selectedClass} onValueChange={setSelectedClass} required>
+                    <SelectTrigger id="class">
+                      <SelectValue placeholder="Selecione a turma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.name}>
+                          {cls.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição *</Label>
                 <Textarea
                   id="description"
+                  name="description"
                   placeholder="Descreva a ocorrência de forma clara e objetiva..."
                   className="min-h-[120px]"
                   required
@@ -114,6 +164,7 @@ const NewOccurrence = () => {
                 <Label htmlFor="action">Ação Corretiva</Label>
                 <Textarea
                   id="action"
+                  name="action"
                   placeholder="Descreva as ações tomadas ou planejadas..."
                   className="min-h-[100px]"
                 />

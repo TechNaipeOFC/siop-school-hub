@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { mockStudents } from '@/lib/mockData';
 import { Search, User } from 'lucide-react';
 import { Student } from '@/types/occurrence';
+import { useStudents } from '@/hooks/useStudents';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StudentSearchProps {
   onSelectStudent: (student: Student) => void;
@@ -16,24 +17,34 @@ export const StudentSearch = ({ onSelectStudent, selectedStudentId }: StudentSea
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
   const [showResults, setShowResults] = useState(false);
+  const { data: students = [], isLoading } = useStudents();
 
   // Extract unique classes
-  const uniqueClasses = Array.from(new Set(mockStudents.map(s => s.class))).sort();
+  const uniqueClasses = Array.from(new Set(students.map(s => s.class))).sort();
 
-  const filteredStudents = mockStudents.filter(student => {
+  const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.registration.includes(searchTerm);
     const matchesClass = classFilter === 'all' || student.class === classFilter;
     return matchesSearch && matchesClass;
   });
 
-  const selectedStudent = mockStudents.find(s => s.id === selectedStudentId);
+  const selectedStudent = students.find(s => s.id === selectedStudentId);
 
   const handleSelectStudent = (student: Student) => {
     onSelectStudent(student);
     setShowResults(false);
     setSearchTerm('');
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -128,7 +139,7 @@ export const StudentSearch = ({ onSelectStudent, selectedStudentId }: StudentSea
           <Label className="text-sm text-muted-foreground">Acesso rápido por turma:</Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {uniqueClasses.map(cls => {
-              const count = mockStudents.filter(s => s.class === cls).length;
+              const count = students.filter(s => s.class === cls).length;
               return (
                 <button
                   key={cls}
