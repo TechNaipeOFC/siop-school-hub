@@ -15,8 +15,7 @@ const Dashboard = () => {
   const stats = {
     total: mockOccurrences.length,
     pending: mockOccurrences.filter(o => !o.resolved).length,
-    critical: mockOccurrences.filter(o => o.severity === 'critica').length,
-    positive: mockOccurrences.filter(o => o.type === 'elogio').length
+    critical: mockOccurrences.filter(o => o.severity === 'critica').length
   };
 
   return (
@@ -89,7 +88,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=all')}>
             <StatsCard
               title="Total de Ocorrências"
@@ -115,15 +114,6 @@ const Dashboard = () => {
               icon={AlertTriangle}
               description="Requerem atenção urgente"
               variant="destructive"
-            />
-          </div>
-          <div className="cursor-pointer" onClick={() => navigate('/occurrences?filter=positive')}>
-            <StatsCard
-              title="Elogios"
-              value={stats.positive}
-              icon={Trophy}
-              description="Reconhecimentos positivos"
-              variant="success"
             />
           </div>
         </div>

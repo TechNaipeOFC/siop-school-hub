@@ -67,19 +67,6 @@ export const mockOccurrences: Occurrence[] = [
     resolved: false
   },
   {
-    id: '2',
-    studentId: '2',
-    studentName: 'Julia Oliveira',
-    type: 'elogio',
-    severity: 'baixa',
-    description: 'Excelente participação na feira de ciências',
-    date: '2025-01-14',
-    teacherId: '1',
-    teacherName: 'Prof. Maria Silva',
-    notified: true,
-    resolved: true
-  },
-  {
     id: '3',
     studentId: '1',
     studentName: 'Pedro Santos',
