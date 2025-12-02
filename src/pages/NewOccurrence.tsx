@@ -11,17 +11,49 @@ import { toast } from 'sonner';
 import { StudentSearch } from '@/components/StudentSearch';
 import { Student, OccurrenceType, OccurrenceSeverity } from '@/types/occurrence';
 import { supabase } from '@/integrations/supabase/client';
-import { useClasses } from '@/hooks/useClasses';
-import { ClassManager } from '@/components/ClassManager';
+import { useQueryClient } from '@tanstack/react-query';
 
 const NewOccurrence = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [type, setType] = useState<OccurrenceType | ''>('');
   const [severity, setSeverity] = useState<OccurrenceSeverity | ''>('');
-  const [selectedClass, setSelectedClass] = useState('');
-  const { data: classes = [] } = useClasses();
+
+  const sendNotification = async (studentData: any, occurrenceData: any) => {
+    try {
+      // Get student details for notification including email
+      const { data: student } = await supabase
+        .from('students')
+        .select('responsible_name, responsible_phone, responsible_email')
+        .eq('id', studentData.id)
+        .single();
+
+      if (!student) return;
+
+      const response = await supabase.functions.invoke('send-notification', {
+        body: {
+          responsibleEmail: (student as any).responsible_email,
+          responsiblePhone: student.responsible_phone,
+          responsibleName: student.responsible_name,
+          studentName: studentData.name,
+          occurrenceType: occurrenceData.type,
+          occurrenceSeverity: occurrenceData.severity,
+          occurrenceDescription: occurrenceData.description,
+          occurrenceDate: new Date().toISOString()
+        }
+      });
+
+      if (response.error) {
+        console.error('Notification error:', response.error);
+      } else {
+        console.log('Notification sent:', response.data);
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,20 +76,41 @@ const NewOccurrence = () => {
         return;
       }
 
+      const occurrenceData = {
+        student_id: selectedStudent.id,
+        teacher_id: user.id,
+        type: formData.get('type') as string,
+        severity: formData.get('severity') as string,
+        description: formData.get('description') as string,
+        corrective_action: formData.get('action') as string || null,
+        notified: false,
+        resolved: false
+      };
+
       const { error } = await supabase
         .from('occurrences')
-        .insert({
-          student_id: selectedStudent.id,
-          teacher_id: user.id,
-          type: formData.get('type') as string,
-          severity: formData.get('severity') as string,
-          description: formData.get('description') as string,
-          corrective_action: formData.get('action') as string || null,
-          notified: false,
-          resolved: false
-        });
+        .insert(occurrenceData);
 
       if (error) throw error;
+
+      // Send notification to responsible
+      await sendNotification(selectedStudent, {
+        type: occurrenceData.type,
+        severity: occurrenceData.severity,
+        description: occurrenceData.description
+      });
+
+      // Mark as notified
+      await supabase
+        .from('occurrences')
+        .update({ notified: true })
+        .eq('student_id', selectedStudent.id)
+        .eq('description', occurrenceData.description)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Invalidate occurrences cache
+      queryClient.invalidateQueries({ queryKey: ['occurrences'] });
 
       toast.success('Ocorrência registrada com sucesso!');
       navigate('/occurrences');
@@ -90,7 +143,10 @@ const NewOccurrence = () => {
         <Card>
           <CardHeader>
             <CardTitle>Nova Ocorrência</CardTitle>
-            <CardDescription>Registre uma nova ocorrência pedagógica ou disciplinar</CardDescription>
+            <CardDescription>
+              Registre uma nova ocorrência pedagógica ou disciplinar. 
+              Digite o nome do aluno para buscar ou criar um novo registro automaticamente.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -125,25 +181,6 @@ const NewOccurrence = () => {
                       <SelectItem value="media">Média</SelectItem>
                       <SelectItem value="alta">Alta</SelectItem>
                       <SelectItem value="critica">Crítica</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="class">Turma *</Label>
-                    <ClassManager />
-                  </div>
-                  <Select value={selectedClass} onValueChange={setSelectedClass} required>
-                    <SelectTrigger id="class">
-                      <SelectValue placeholder="Selecione a turma" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.name}>
-                          {cls.name}
-                        </SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>

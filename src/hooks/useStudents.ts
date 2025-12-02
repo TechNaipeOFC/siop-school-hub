@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Student } from '@/types/occurrence';
 
+export interface StudentWithContact extends Student {
+  responsibleEmail?: string;
+  responsiblePhone?: string;
+}
+
 export const useStudents = () => {
   return useQuery({
     queryKey: ['students'],
@@ -13,13 +18,15 @@ export const useStudents = () => {
 
       if (error) throw error;
 
-      return data.map((student): Student => ({
+      return data.map((student): StudentWithContact => ({
         id: student.id,
         name: student.name || '',
         registration: student.registration,
         class: student.class,
         responsibleId: student.user_id || '',
         responsibleName: student.responsible_name,
+        responsibleEmail: (student as any).responsible_email || undefined,
+        responsiblePhone: student.responsible_phone || undefined,
         photoUrl: undefined
       }));
     }

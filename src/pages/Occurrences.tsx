@@ -5,9 +5,16 @@ import { Input } from '@/components/ui/input';
 import { OccurrenceBadge } from '@/components/OccurrenceBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, GraduationCap, LogOut } from 'lucide-react';
-import { mockOccurrences } from '@/lib/mockData';
+import { Plus, Search, Filter, GraduationCap, LogOut, Calendar } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useOccurrences } from '@/hooks/useOccurrences';
+import { useClasses } from '@/hooks/useClasses';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Occurrences = () => {
   const navigate = useNavigate();
@@ -16,6 +23,11 @@ const Occurrences = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [classFilter, setClassFilter] = useState('all');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  const { data: classes = [] } = useClasses();
 
   // Apply filters from URL params
   useEffect(() => {
@@ -24,8 +36,6 @@ const Occurrences = () => {
       setStatusFilter('pending');
     } else if (filter === 'critical') {
       setSeverityFilter('critica');
-    } else if (filter === 'positive') {
-      setTypeFilter('elogio');
     } else if (filter === 'pedagogico') {
       setTypeFilter('pedagogico');
     } else if (filter === 'indisciplina') {
@@ -33,17 +43,28 @@ const Occurrences = () => {
     }
   }, [searchParams]);
 
-  const filteredOccurrences = mockOccurrences.filter(occurrence => {
-    const matchesSearch = occurrence.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         occurrence.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || occurrence.type === typeFilter;
-    const matchesSeverity = severityFilter === 'all' || occurrence.severity === severityFilter;
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'pending' && !occurrence.resolved) ||
-                         (statusFilter === 'resolved' && occurrence.resolved);
-    
-    return matchesSearch && matchesType && matchesSeverity && matchesStatus;
+  const { data: occurrences = [], isLoading } = useOccurrences({
+    search: searchTerm,
+    type: typeFilter,
+    severity: severityFilter,
+    status: statusFilter,
+    classFilter: classFilter,
+    startDate: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
+    endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined
   });
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setTypeFilter('all');
+    setSeverityFilter('all');
+    setStatusFilter('all');
+    setClassFilter('all');
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const hasActiveFilters = searchTerm || typeFilter !== 'all' || severityFilter !== 'all' || 
+                           statusFilter !== 'all' || classFilter !== 'all' || startDate || endDate;
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,105 +102,184 @@ const Occurrences = () => {
           </Button>
         </div>
 
-        {/* Filters */}
+        {/* Advanced Filters */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por aluno ou descrição..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="space-y-4">
+              {/* First row - Search and main filters */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por aluno ou descrição..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={classFilter} onValueChange={setClassFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Turma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as turmas</SelectItem>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.name}>{cls.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="comportamento">Comportamento</SelectItem>
+                    <SelectItem value="pedagogico">Pedagógico</SelectItem>
+                    <SelectItem value="indisciplina">Indisciplina</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="comportamento">Comportamento</SelectItem>
-                  <SelectItem value="pedagogico">Pedagógico</SelectItem>
-                  <SelectItem value="indisciplina">Indisciplina</SelectItem>
-                  <SelectItem value="elogio">Elogio</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Gravidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="critica">Crítica</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendentes</SelectItem>
-                  <SelectItem value="resolved">Resolvidas</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {/* Second row - More filters */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Gravidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="critica">Crítica</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendentes</SelectItem>
+                    <SelectItem value="resolved">Resolvidas</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Date Range - Start Date */}
+                <div className="flex-1 md:flex-none">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full md:w-[180px] justify-start">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Data inicial'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Date Range - End Date */}
+                <div className="flex-1 md:flex-none">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full md:w-[180px] justify-start">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Data final'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" onClick={clearFilters} className="md:ml-auto">
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Results count */}
+        {!isLoading && (
+          <p className="text-sm text-muted-foreground mb-4">
+            {occurrences.length} ocorrência{occurrences.length !== 1 ? 's' : ''} encontrada{occurrences.length !== 1 ? 's' : ''}
+          </p>
+        )}
+
         {/* Occurrences List */}
         <div className="space-y-4">
-          {filteredOccurrences.map((occurrence) => (
-            <Card
-              key={occurrence.id}
-              className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate(`/occurrences/detail/${occurrence.id}`)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-lg">{occurrence.studentName}</h3>
-                      <OccurrenceBadge type={occurrence.type} />
-                      <OccurrenceBadge severity={occurrence.severity} />
-                      {!occurrence.resolved && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning-foreground">
-                          Pendente
-                        </span>
+          {isLoading ? (
+            <>
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </>
+          ) : occurrences.length > 0 ? (
+            occurrences.map((occurrence) => (
+              <Card
+                key={occurrence.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => navigate(`/occurrences/detail/${occurrence.id}`)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-lg">{occurrence.studentName}</h3>
+                        <OccurrenceBadge type={occurrence.type} />
+                        <OccurrenceBadge severity={occurrence.severity} />
+                        {!occurrence.resolved && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning-foreground">
+                            Pendente
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground">{occurrence.description}</p>
+                      {occurrence.correctiveAction && (
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Ação corretiva:</span> {occurrence.correctiveAction}
+                        </p>
                       )}
-                    </div>
-                    <p className="text-muted-foreground">{occurrence.description}</p>
-                    {occurrence.correctiveAction && (
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-medium">Ação corretiva:</span> {occurrence.correctiveAction}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{occurrence.teacherName}</span>
-                      <span>•</span>
-                      <span>{new Date(occurrence.date).toLocaleDateString('pt-BR')}</span>
-                      {occurrence.notified && (
-                        <>
-                          <span>•</span>
-                          <span className="text-success">Notificado</span>
-                        </>
-                      )}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{occurrence.teacherName}</span>
+                        <span>•</span>
+                        <span>{new Date(occurrence.date).toLocaleDateString('pt-BR')}</span>
+                        {occurrence.notified && (
+                          <>
+                            <span>•</span>
+                            <span className="text-success">Notificado</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {filteredOccurrences.length === 0 && (
+                </CardContent>
+              </Card>
+            ))
+          ) : (
             <Card>
               <CardContent className="p-12 text-center">
                 <p className="text-muted-foreground">Nenhuma ocorrência encontrada</p>
