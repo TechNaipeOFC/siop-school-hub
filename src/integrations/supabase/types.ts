@@ -105,6 +105,7 @@ export type Database = {
           id: string
           name: string | null
           registration: string
+          responsible_email: string | null
           responsible_name: string
           responsible_phone: string | null
           user_id: string | null
@@ -116,6 +117,7 @@ export type Database = {
           id?: string
           name?: string | null
           registration: string
+          responsible_email?: string | null
           responsible_name: string
           responsible_phone?: string | null
           user_id?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           id?: string
           name?: string | null
           registration?: string
+          responsible_email?: string | null
           responsible_name?: string
           responsible_phone?: string | null
           user_id?: string | null
